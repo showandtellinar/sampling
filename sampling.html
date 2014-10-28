@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sampling</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style type="text/css">
+      @import url(http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(http://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+    </style>
+	<script type="text/x-mathjax-config">
+	  MathJax.Hub.Config({
+				 tex2jax: {
+				   inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+				   processEscapes: true
+				 }
+			   });
+	</script>
+	<script type="text/javascript"
+		src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+	</script>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# A Sampling of Ways to Sample Samples
+
+---
+
+# Warmup
+
+We want to take 1 element from a stream of $N$ elements, where $N$ is
+unknown. Suppose we can only look at each element once and want each element to
+be equally likely to be chosen.
+
+How can we do this?
+
+---
+
+# Warmup
+
+We want to take 1 element from a stream of $N$ elements, where $N$ is
+unknown. Suppose we can only look at each element once and want each element to
+be equally likely to be chosen.
+
+How can we do this?
+
+
+```python
+def select1(samples):
+    selection, count = None, 1
+    for sample in samples:
+        if random() &lt= 1 / count: # random number in [0,1]
+            selection = sample
+        count += 1
+	return selection 
+```
+
+---
+
+# Warmup
+
+```python
+def select1(samples):
+    selection, count = None, 1
+    for sample in samples:
+        if random() &lt= 1 / count: # random number in [0,1]
+            selection = sample
+        count += 1
+	return selection 
+```
+
+Why does this work?
+
+---
+
+# Warmup
+
+```python
+def select1(samples):
+    selection, count = None, 1
+    for sample in samples:
+        if random() &lt= 1 / count: # random number in [0,1]
+            selection = sample
+        count += 1
+	return selection 
+```
+
+Why does this work?
+
+We select the $i$th element with probability $1/i$. The probability of <i>not</i>
+selecting every following element is
+
+$$ (1-\frac{1}{i+1}) (1-\frac{1}{i+2}) \cdots (1 - \frac{1}{N}) = 
+\frac{i}{i+1} \cdot \frac{i+1}{i+2} \cdots \frac{N-1}{N} = \frac{i}{N}$$
+
+Multiplying these two probabilities gives $$\frac{1}{i} \cdot \frac{i}{N} =
+\frac{1}{N}$$
+---
+
+# Outline
+
+1. Simple Random Sampling
+2. Bootstrapping
+3. Coresets
+4. Sublinear Algorithms
+---
+
+# In an ideal world...
+## Simple Random Sampling
+
+The goal is to choose a subset of a sample space so that the following
+characteristics are met:
+1. Elements are chosen at random
+2. Each subset is equally likely
+
+The following ways both generate simple random samples of size $k$ from a
+population of $N$ elements.
+1. Randomly permute the $N$ elements and take the first $k$.
+2. Randomly generate an integer $i$ between 1 and $N$. Select the $i$th element,
+ignoring those that are already selected. Repeat this selection process until
+$k$ elements have been chosen.
+---
+
+# Bootstrapping
+
+The idea behind bootstrapping is that we can <i>resample</i> a sample.
+Implicitly, we'll assume that our original sample is "close" to the actual
+distribution.
+---
+
+# Bootstrapping
+
+The idea behind bootstrapping is that we can <i>resample</i> a sample.
+Implicitly, we'll assume that our original sample is "close" to the actual
+distribution.
+
+You should be excited by this! Bootstrapping lets us generate synthetic data
+sets.
+
+Assume you're Elon Musk and want to know more about SpaceX's rocket launches.
+In particular, suppose you want to learn more about an estimator $X$. Rockets
+are expensive, so you bootstrap:
+1. Resample to get a new sample. Compute $X$ for this sample.
+2. Repeat step 1 multiple times.
+3. Analyse all the $X$s (e.g. linear regression) 
+
+This is known as <u>non-parametric bootstrapping</u>.
+---
+
+# Parametric Bootstrapping
+
+The same idea as before, but we change how we resample.
+
+Instead of resampling directly our original sample, we create a convariance matrix
+matching the one for the original sample. Next, we generate a sample for a
+parametric distribution using the covariance matrix.
+
+What could go wrong? (don't overlook the obvious)
+
+---
+
+# Coresets
+
+Coresets are used to make large amounts of data (e.g. streams) more tractable.
+Essentially, they can be viewed as an advanced form of clustering. 
+---
+
+# Coresets
+
+Coresets are used to make large amounts of data (e.g. streams) more tractable.
+Essentially, they can be viewed as an advanced form of clustering. 
+
+Some examples include:
+* $k$-means
+* $k$-lines
+* $j$-subspace clustering
+
+---
+
+# Coresets
+
+Coresets are used to make large amounts of data (e.g. streams) more tractable.
+Essentially, they can be viewed as an advanced form of clustering. 
+
+Some examples include:
+* <span style="color: red;">$k$-means</span>
+* $k$-lines
+* $j$-subspace clustering
+
+<div style="text-align:center;height=200px;">
+	<!-- Images from Wikipedia -->
+	<img style="" height="200" src="pictures/kmean1.svg"> 
+	<svg width="150" height="200">
+		<defs>
+			<marker id="arrow" markerWidth="13" markerHeight="13"
+			refx="2" refy="6" orient="auto">
+			<path d="M2,2 L2,11 L10,6 L2,2"
+			style="fill:red;" />
+			</marker>
+		</defs>
+
+		<path d="M50,100 L100,100"
+		style="stroke:red;
+		stroke-width: 1.40px;
+		fill: none;
+		marker-end:
+		url(#arrow);"
+		/>
+	</svg>
+	<img style="" height="200" src="pictures/kmean2.svg">
+</div>
+
+---
+
+# Coresets
+
+Coresets are used to make large amounts of data (e.g. streams) more tractable.
+Essentially, they can be viewed as an advanced form of clustering. 
+
+Some examples include:
+* $k$-means
+* <span style="color: red;">$k$-lines</span>
+* $j$-subspace clustering
+
+<div style="text-align:center;height=200px;">
+	<svg width="200" height="200">
+		  <circle cx="5" cy="50" r="5" fill="black" />
+		  <circle cx="10" cy="80" r="5" fill="black" />
+		  <circle cx="20" cy="120" r="5" fill="black" />
+		  <circle cx="30" cy="110" r="5" fill="black" />
+		  <circle cx="80" cy="125" r="5" fill="black" />
+		  <circle cx="15" cy="150" r="5" fill="black" />
+		  
+		  <circle cx="150" cy="50" r="5" fill="black" />
+		  <circle cx="160" cy="115" r="5" fill="black" />
+		  <circle cx="170" cy="120" r="5" fill="black" />
+		  <circle cx="190" cy="110" r="5" fill="black" />
+		  <circle cx="210" cy="65" r="5" fill="black" />
+		  <circle cx="195" cy="50" r="5" fill="black" />
+
+	</svg>
+	<svg width="150" height="200">
+		<defs>
+			<marker id="arrow" markerWidth="13" markerHeight="13"
+			refx="2" refy="6" orient="auto">
+			<path d="M2,2 L2,11 L10,6 L2,2"
+			style="fill:red;" />
+			</marker>
+		</defs>
+
+		<path d="M50,100 L100,100"
+		style="stroke:red;
+		stroke-width: 1.40px;
+		fill: none;
+		marker-end:
+		url(#arrow);"
+		/>
+	</svg>
+	<svg width="200" height="200">
+		  <circle cx="5" cy="50" r="5" fill="orange" />
+		  <circle cx="10" cy="80" r="5" fill="orange" />
+		  <circle cx="20" cy="120" r="5" fill="orange" />
+		  <circle cx="30" cy="110" r="5" fill="orange" />
+		  <circle cx="80" cy="125" r="5" fill="blue" />
+		  <circle cx="15" cy="150" r="5" fill="blue" />
+		  
+		  <circle cx="150" cy="50" r="5" fill="green" />
+		  <circle cx="160" cy="115" r="5" fill="blue" />
+		  <circle cx="170" cy="120" r="5" fill="blue" />
+		  <circle cx="190" cy="110" r="5" fill="blue" />
+		  <circle cx="210" cy="65" r="5" fill="blue" />
+		  <circle cx="195" cy="55" r="5" fill="green" />
+
+	</svg>
+</div>
+---
+
+# Coresets
+
+Coresets are used to make large amounts of data (e.g. streams) more tractable.
+Essentially, they can be viewed as an advanced form of clustering. 
+
+Some examples include:
+* $k$-means
+* $k$-lines
+* <span style="color: red;">$j$-subspace clustering</span>
+
+<div style="text-align:center;height=200px;">
+	<!-- Images taken from http://users.cis.fiu.edu/~taoli/pub/k-subspace-clustering.pdf -->
+	<img src="pictures/subspace1.png" width="800">
+</div>
+---
+
+# Coresets
+
+Coresets are used to make large amounts of data (e.g. streams) more tractable.
+Essentially, they can be viewed as an advanced form of clustering. 
+
+Some examples include:
+* $k$-means
+* $k$-lines
+* <span style="color: red;">$j$-subspace clustering</span>
+
+<div style="text-align:center;height=200px;">
+	<!-- Images taken from http://users.cis.fiu.edu/~taoli/pub/k-subspace-clustering.pdf -->
+	<img src="pictures/subspace2.png" width="800">
+</div>
+---
+
+# Coresets
+#### <a href="http://people.csail.mit.edu/dannyf/subspace.pdf">More formal example</a>
+
+Consider the $j$-clustering problem. Suppose we have:
+1. a $n \times d$ matrix $A$ of points in $\mathbb{R}^d$
+2. a cost function $\mathsf{cost} : \mathbb{R}^j \rightarrow \mathbb{R}$
+
+Call a $m \times n$ matrix $M$ a $(k,\varepsilon)$-coreset if 
+
+$ \exists c\in \mathbb{R} \quad \forall L= \\{L_1, \ldots, L_k \\}$
+$$(1-\varepsilon)\mathsf{cost}(A,L) \leq
+\mathsf{cost}(M,L)+c \leq (1+\varepsilon)\mathsf{cost}(A,L)$$
+
+So, a coreset aims to be a good enough approximation of some data with respect
+to a cost function. How is this different from clustering?
+---
+
+# Coresets
+
+Consider the $j$-clustering problem. Suppose we have:
+1. a $n \times d$ matrix $A$ of points in $\mathbb{R}^d$
+2. a cost function $\mathsf{cost} : \mathbb{R}^j \rightarrow \mathbb{R}$
+
+Call a $m \times n$ matrix $M$ a $(k,\varepsilon)$-coreset if 
+
+$ \exists c\in \mathbb{R} \quad \forall L= \\{L_1, \ldots, L_k \\}$
+$$(1-\varepsilon)\mathsf{cost}(A,L) \leq
+\mathsf{cost}(M,L)+c \leq (1+\varepsilon)\mathsf{cost}(A,L)$$
+
+So, a coreset aims to be a good enough approximation of some data with respect
+to a cost function. How is this different from clustering?
+
+Coresets try to find subsets that best summarize a set of data with respect to
+certain attributes. Clustering uses a metric.
+
+We could achieve a result similar to coresets by using clustering with an
+extremely specific metric, but choosing this metric is difficult.
+
+---
+
+# Sublinear Algorithms
+
+Alon, Matias, and Szegedy founded the field of streaming algorithms in a 1996
+<a href="http://dl.acm.org/citation.cfm?doid=237814.237823">paper</a>, winning them the 2005 Gödel
+Prize.
+
+As their name implies, streaming algorithms target problems where data arrives
+via a stream (e.g. a twitter feed) or cannot be accessed all at once. 
+
+Some examples include:
+* Frequency moments; suppose we have a set $S$ of numbers and define 
+$ F_k = \Sigma s^k$ for all $s \in S$. $F_0$, $F_1$, $F_2$ can be approximated
+using logarithmic space.
+* Finding the majority in a data set
+* Finding the $k$ most frequent items in a set
+* Count-min sketch
+* Reservoir sampling
+---
+
+# Computing the majority
+
+Suppose we have a stream $S$ of numbers, and we want to find which number is the
+majority. How should we do this?
+---
+
+# Computing the majority
+
+Suppose we have a stream $S$ of numbers, and we want to find which number is the
+majority. How should we do this?
+
+```python
+def majority(S):
+	bestSoFar = (0, None)
+	for s in S:
+		if bestSoFar[0] == 0: 	# we have nothing, take s
+			bestSoFar[0] = 1
+			bestSoFar[1] = s
+		elif bestSoFar[1] == s:
+			bestSoFar[0] += 1
+		else: 					# removing both elements preserves the majority
+			bestSoFar[0] -= 1
+	if bestSoFar[0] == 0: bestSoFar[1] = None
+	return bestSoFar[1]
+```
+---
+
+# Computing frequency
+Now, we want to find the $k$ most frequent instead of just the majority. How?
+---
+
+# Computing frequency
+Now, we want to find the $k$ most frequent instead of just the majority. How?
+
+The idea is the same one we used when finding the majority. This time, we just 
+keep a list of $k$ pairs.
+---
+
+# Count-min sketch
+
+Count-min is a technique discovered by Cormode and Muthukrishnan and 
+<a href="http://www.cse.unsw.edu.au/~cs9314/07s1/lectures/Lin_CS9314_References/cm-latin.pdf">published
+in 2004</a>. In essence, they applied Bloom filters to data streams. (Hint:
+count-min uses spectral bloom filters in a funny hat.)
+
+A count-min sketch works as follows:
+1. Choose $d$ independent hash functions $h_1, \ldots, h_d$.
+2. Fix a constant $w$. We'll use this as the length of our bit vectors. This
+gives us a $w \times d$ array.
+3. Every time we have a sample $s$, we compute $h_i(s)$ and increment $(i, h_i(s))$.
+
+We can then query the filters for various properties like counts, inner
+products, and quantiles. If we take $w=\frac{e}{\varepsilon}$ and $d=\ln \frac{1}{\delta}$, then 
+an estimate $\hat a$ from the filter is $P[\hat a \leq a + \varepsilon|a|] \leq 1 - \delta$.
+
+---
+
+# Reservoir Sampling
+
+The solution for the warmup generalizes to when we want to select $k$ elements
+and don't know the number of samples.
+---
+
+# Reservoir Sampling
+
+The solution for the warmup generalizes to when we want to select $k$ elements
+and don't know the number of samples.
+
+```python
+def selectk(samples, k):
+    n = len(samples)
+    reservoir = [ samples[i] for i in range(k) ] # assume k &lt= n
+    i = k
+    while i &lt n:
+        j = random(0, i) # 0 &lt= j &lt i
+        if j &lt k:
+            reservoir[j] = samples[j]
+        i += 1
+    return reservoir
+```
+
+This is known as reservoir sampling. [Vitter's
+paper](http://www.cs.umd.edu/~samir/498/vitter.pdf) explains it in more detail.
+
+    </textarea>
+    <script src="http://gnab.github.io/remark/downloads/remark-latest.min.js" type="text/javascript">
+    </script>
+    <script type="text/javascript">
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
